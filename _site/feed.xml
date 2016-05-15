@@ -1,0 +1,1194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>CharlieShao&#39;s Blog</title>
+    <description>CharlieShao&#39;s Blog</description>
+    <link>http://charlieshao5189.github.io/</link>
+    <atom:link href="http://charlieshao5189.github.io/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Sun, 15 May 2016 18:57:25 +0200</pubDate>
+    <lastBuildDate>Sun, 15 May 2016 18:57:25 +0200</lastBuildDate>
+    <generator>Jekyll v3.0.1</generator>
+    
+      <item>
+        <title>VHDL signal and variable difference</title>
+        <description>&lt;p&gt;1.Signals are used to connect the design components and must carry the information between current statements of the design. On the other hand, variables are used within process to compute certain values.Variables must be declared inside a process
+2. A variable changes instantaneously when the variable assignment is executed. On the other hand, a signal changes a delay after the assignment expression is evaluated. If no delay is specified, the signal will change after a delta delay. This has important consequences for the updated values of variables and signals. 
+————————————————————-
+below are the example in which a process is used to calculate the signal RESULT .&lt;/p&gt;
+
+&lt;p&gt;Example of a process using Variables&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;
+architecture VAR of EXAMPLE is
+signal TRIGGER, RESULT: integer := 0; 
+begin
+process
+variable variable1: integer :=1;
+variable variable2: integer :=2;
+variable variable3: integer :=3;
+begin
+wait on TRIGGER;
+variable1 := variable2;
+variable2 := variable1 + variable3;
+variable3 := variable2;
+RESULT &amp;lt;= variable1 + variable2 + variable3;
+end process;
+end VAR
+&lt;/code&gt;
+————————————————————-
+Example of a process using Signals&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;
+architecture SIGN of EXAMPLE is
+signal TRIGGER, RESULT: integer := 0; 
+signal signal1: integer :=1;
+signal signal2: integer :=2;
+signal signal3: integer :=3;
+begin
+process 
+begin
+wait on TRIGGER;
+signal1 &amp;lt;= signal2;
+signal2 &amp;lt;= signal1 + signal3;
+signal3 &amp;lt;= signal2;
+RESULT &amp;lt;= signal1 + signal2 + signal3;
+end process;
+end SIGN;
+&lt;/code&gt;
+——————————————————————-
+In the first case, the variables “variable1, variable2 and variable3” are computed sequentially and their values updated instantaneously after the TRIGGER signal arrives. Next, the RESULT is computed using the new values of the variables. This results in the following values (after a time TRIGGER): variable1 = 2, variable2 = 5 (=2+3), variable3= 5. Since RESULT is a signal it will be computed at the time TRIGGER and updated at the time TRIGGER + Delta. Its value will be RESULT=12.&lt;/p&gt;
+
+&lt;p&gt;On the other hand, in the second example, the signals will be computed at the time TRIGGER. All of these signals are computed at the same time, using the old values of signal1, 2 and 3. All the signals will be updated at Delta time after the TRIGGER has arrived. Thus the signals will have these values: signal1= 2, signal2= 4 (=1+3), signal3=2 and RESULT=7.&lt;/p&gt;
+</description>
+        <pubDate>Sat, 30 Jan 2016 00:00:00 +0100</pubDate>
+        <link>http://charlieshao5189.github.io/%E6%8A%80%E6%9C%AF/2016/01/30/VHDL-signal-variable.html</link>
+        <guid isPermaLink="true">http://charlieshao5189.github.io/%E6%8A%80%E6%9C%AF/2016/01/30/VHDL-signal-variable.html</guid>
+        
+        <category>VHDL</category>
+        
+        
+        <category>技术</category>
+        
+      </item>
+    
+      <item>
+        <title>VHDL FSM - mearly and moore outputs</title>
+        <description>&lt;p&gt;FSM component: state register, next-state logic and output logic.&lt;/p&gt;
+
+&lt;p&gt;Moore machine: the output is only a function of state.&lt;/p&gt;
+
+&lt;p&gt;Mealy machine: the output is a function of state and external input.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/charlieshao5189/charlieshao5189.github.io/master/assets/pics/stateDiagram.png&quot; alt=&quot;state diagram and ASM chart&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;```VHDL
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;&lt;/p&gt;
+
+&lt;p&gt;entity fsm is
+    Port ( clk : in  STD_LOGIC;
+           rst : in  STD_LOGIC;
+           a : in  STD_LOGIC;
+           b : in  STD_LOGIC;
+           y0 : out  STD_LOGIC;
+           y1 : out  STD_LOGIC);
+end fsm;&lt;/p&gt;
+
+&lt;p&gt;architecture Behavioral of fsm is&lt;/p&gt;
+
+&lt;p&gt;type eg_state_type is (s0,s1,s2);
+signal state_reg,state_next:eg_state_type;&lt;/p&gt;
+
+&lt;p&gt;begin
+–state register update
+process(clk, rst)
+begin
+	if(rst=’1’)then
+		state_reg&amp;lt;=s0;
+	elsif clk’event and clk=’1’ then
+		state_reg&amp;lt;=state_next;
+	end if;
+end process;&lt;/p&gt;
+
+&lt;p&gt;– next-state logic and output logic codes are sepreated&lt;/p&gt;
+
+&lt;p&gt;—-next state logic
+–process(state_reg,a,b)
+–begin
+–	case state_reg is
+–		when s0=&amp;gt;
+–		  if a=’1’ then
+–			  if b=’1’ then
+–					state_next&amp;lt;=s2;
+–				else 
+–		         state_next&amp;lt;=s1;
+–				end if;
+–		  else
+–		     state_next&amp;lt;=s0;
+–		  end if;
+–		when s1=&amp;gt;
+–			if a=’1’ then
+–				state_next&amp;lt;=s0;
+–			else
+–			   state_next&amp;lt;=s1;
+–			end if;
+–		when s2=&amp;gt;
+–				state_next&amp;lt;=s0;
+–	end case;
+–end process; 
+—-moore output logic
+–process(state_reg)
+–begin
+–case state_reg is 
+–	when s0|s1=&amp;gt;
+–		y1&amp;lt;=’1’;
+–	when s2=&amp;gt;
+–		y1&amp;lt;=’0’;
+–end case;
+–end process;
+—-mealy output logic
+–process(state_reg,a,b)
+–	begin
+–		case state_reg is
+–			when s0=&amp;gt;
+–				if a=’1’ and b=’1’ then
+–					y0&amp;lt;=’1’;
+–				else
+–					y0&amp;lt;=’0’;
+–				end if;
+–			when s1|s2=&amp;gt;
+–				y0&amp;lt;=’0’;
+–		end case;
+–end process;&lt;/p&gt;
+
+&lt;p&gt;– next-state logic and output logic codes are merged into a signal combinational block&lt;/p&gt;
+
+&lt;p&gt;–next state logic
+process(state_reg,a,b)
+begin
+	state_next&amp;lt;=state_reg;–default back to the same state;
+	y0&amp;lt;=’0’;–default 0
+	y1&amp;lt;=’0’;–default 0
+	case state_reg is
+		when s0=&amp;gt;
+			y1&amp;lt;=’1’;
+		  if a=’1’ then
+			  if b=’1’ then
+					y0&amp;lt;=’1’;
+					state_next&amp;lt;=s2;
+				else 
+		         state_next&amp;lt;=s1;
+				end if;
+		–no else branch
+		  end if;
+		when s1=&amp;gt;
+		   y1&amp;lt;=’1’;
+			if a=’1’ then
+				state_next&amp;lt;=s0;
+		–no else branch
+			end if;
+		when s2=&amp;gt;
+				state_next&amp;lt;=s0;
+	end case;
+end process;&lt;/p&gt;
+
+&lt;p&gt;end Behavioral;
+```&lt;/p&gt;
+</description>
+        <pubDate>Sat, 30 Jan 2016 00:00:00 +0100</pubDate>
+        <link>http://charlieshao5189.github.io/%E6%8A%80%E6%9C%AF/2016/01/30/VHDL-FSM-mearly-moore-outputs.html</link>
+        <guid isPermaLink="true">http://charlieshao5189.github.io/%E6%8A%80%E6%9C%AF/2016/01/30/VHDL-FSM-mearly-moore-outputs.html</guid>
+        
+        <category>VHDL</category>
+        
+        
+        <category>技术</category>
+        
+      </item>
+    
+      <item>
+        <title>miss想念和错过</title>
+        <description>&lt;iframe width=&quot;420&quot; height=&quot;315&quot; src=&quot;https://www.youtube.com/embed/1PMmLKspe_s&quot; frameborder=&quot;0&quot; allowfullscreen=&quot;&quot;&gt;&lt;/iframe&gt;
+
+&lt;p&gt;还有一个星期就要过年了，微信朋友圈里朋友们陆续晒出了回家的照片，身为在外的游子我真的很羡慕他们。2016年春节，第一次感觉和家的距离那么远，不只是距离上，更是一种心灵上的遥远。如果我现在在国内，如果我现在在他们的身边我在做着什么呢。我可能在姐姐家里帮还没满月小家伙换尿布被赫赫追着喊舅舅，我可能在哥哥家听小美女讲幼儿园里小朋友怎么讨好她听帅帅讲他最近迷上的游戏，我可能在和父亲一起看抗战连续剧，看到他激动的地方适时地说句“别哭”逗他开心一笑，我也可能和母亲在厨房说说我的近况我的想法得到她全面的支持鼓励， 最最有可能的是今天周六，我们全家聚在一起吃例行午餐，然后哥哥尝了一口妈妈刚端上来的菜说“就是这个味，和小时候的一模一样”，大家哈哈大笑。这样的日子最近的一年半是感受不到了，但此刻回想起这些点点滴滴，我感觉很幸福很幸福。Miss这个单词有失去和想念的意思，想想挺有道理的，失去的才显得弥足珍贵，值得想念。当然miss还有小姐，姑娘的意思，年轻的姑娘很值得想念啊。一个单词集合了这么多意思，还都那么恰如其分，拿来表达此刻的心情真的正合适。&lt;/p&gt;
+
+&lt;p&gt;出来大半年了，本来该留在元旦之前的跨年总结跨到了一月的末尾，经历里了挪威一月份的暴风雪，算是比较完整了。&lt;/p&gt;
+
+&lt;p&gt;现在回想一年前，一个清晰的开始还是过年的时候，当然过年前的抢票也比较惊心动魄，相信每个在大城市打拼的游子都有过相似的经历。年前回去之前我还给孩子们买了礼物，赫赫是足球，妞妞是电子琴，帅帅财迷准备直接发钱满足他，脑补了一下他们收到礼物时候的心情，等我回到家的时候他们的新鲜劲已经没啦，我挺失望的，下次一定要亲手送给他们。去年不同往年，姥姥去世的第一年，所以我们兄弟也就没有像往常一样忙着贴门画，家里张罗一切从简。姥姥以前是村里最长的老年人，和她平辈比她小一辈的人都没有了，每年半个村子的同姓的人都要来我家拜年，去年就清净了很多，也感觉年味淡了很多，多的是对姥姥的怀念，怀念小时候大年初一跟他去庙里拜佛烧香，怀念她年初一摆在堂屋的供桌，怀念她坐在那里慈眉善目，和每一个来给她拜年的人谈论当年的光景。母亲去年也摆了供桌，招呼去世的亲人回家吃饭，只是今年多了姥姥。姥姥以前常跟我说，她去世以后回去南边的仙山做神仙，还会继续保佑着家人。我相信她现在在某个没有痛苦的地方，静静的看着我保佑着我。&lt;/p&gt;
+
+&lt;p&gt;过完年回到公司已经是三月份了，挪威那边录取的结果要到四月中旬才出来，但是我已经开始焦灼了。白天上班还好，晚上就开始失眠。失眠的原因是不自信。我当时竟然在傻傻地担心录取结果本身，一遍一遍查看邮箱，然后问自己到底会不会被录取。最后我得出的结果是我不会被录取，我打电话给妈妈说我想回去，相亲结婚生子，在小城市相对平平淡淡地过一生，这是我出来的时候给自己留的退路，我也知道这是家人最想让我走的路，但也是我当时最不想走的路。但是命运总是爱开玩笑，第二天，打算辞职的我却收到了一所学校寄来的通知书，这给了我坚持下去的勇气，有了这所学校保底出去是没有问题了，但是我还是要等我心仪的学校和专业，在咨询了前辈之后，我先确认了第一份通知书，因为我是可以反悔的，并且这对其他学校的录取没有影响。四月中旬，此处应该有音乐“终于等到你！”，我终于收了心仪的那个学校的录取通知，不是名校，却是我喜欢的专业喜欢的城市，学校在一座北欧小城，被森林和湖泊环绕。当时真的很感谢姥姥的在天有灵，四个学校录了两个，最重要的是去了我喜欢的专业。录取的事情告一段落，定了机票，请了同事和几个朋友吃饭，我在上海待到了四月中旬就回家了。&lt;/p&gt;
+
+&lt;p&gt;八月份开学，我还有五六七三个月，需要办签证和转钱。这期间去北京待了三天办签证，去上海转的钱，其他时间就报了个驾校，每天去学车准备考试。这三件事看起来挺简单，但每一件都有故事。&lt;/p&gt;
+
+&lt;p&gt;记得很清楚是4月15号正式辞职的，辞职后回家凑钱，父母哥哥姐姐和我一丁点的积蓄以及各亲友的亲情赞助，我凑够了第一年需要的费用整整十万，转钱的时候发现我们的城市的银行不支持汇挪威克朗，于是又跑到上海陆家嘴，拖着大箱子来来回回奔波了一天也没办成，倒是第二天在公司宿舍附近的银行顺利办成。正好赶上五一，约上几个大学同学直奔杭州，同学兔子在杭州读研，给我们做了免费导游，雨中游西湖，正是江南好。断桥之上我不是许仙，也没有遇到白素贞。&lt;/p&gt;
+
+&lt;p&gt;回到家脑子抽筋，去报了驾照，三个月，其实还是有风险的，逼自己一把。第二个去办签证，在北京三天去找了大学同学体神，受到了热情款待，但是不巧的是他也正在学车，所以除了第一天他陪我一起去三里屯办签证，另外都是我自己在逛。比较幸运的是第一天我们回来的路上他捡到了一张内含五百多元的交通卡，所以后两天我的出行游玩靠的就是它和借来的学生证。第二天我自己去了天安门和故宫，感受了一下帝都的风范。我当时不知道故宫在哪里，走了半天一问才发现原来故宫就在天安门的后面，是从天安门的侧门进去的。在故宫跟着旅游团听了一路，还是挺涨知识的，但是我对历史古迹不感冒，也只是走马观花看看热闹。比较在意的是作为皇家建筑，故宫，岱庙，孔子庙基本是一个模子刻出来的。第三天去爬了香山，因为是春天，所以没有欣赏到层林尽染的美景，只有自行脑补了。误打误撞先去了碧云寺，瞻仰了孙中山先生的遗迹，再去爬香炉峰已经稍微有点晚了，一路上很多建筑都修整，像是工地，很煞风景。印象比较深的是双清别墅，优雅精致，很多学生在接受爱国主义教育，顺便感受了一下领导人的防空洞，安全不安全不知道，但是很凉快。&lt;/p&gt;
+
+&lt;p&gt;结束北京之行。就是专心学车了，科一很顺利，科二第一次没过，瞬间很紧张，第二次的时候很有戏剧性，比电视剧都精彩，一波三折，但都在我哥的护航下一一破解。第一折，忘带身份证，简直脑残了，犯这种低级错误，好在考试安排在了下午，我哥带着我回家取来；第二折，我当时有午睡的习惯，定了下午一点半的闹钟，进考场考官讲考试纪律，要求手机关了，我确实关机了，但是可能放到兜里压到开机键手机自己开机了，结果考官刚讲两句我的手机就响了，尼玛还在第一排面对着考官，当时考官怒目圆睁就两个字“出去！”，我无法解释，只好自己出去。好在考官后来出来跟他说明了情况，才争取到了排到最后的机会；第三折，不知道是考官有意为之还是命运的捉弄，我竟然被分到了传说中的死亡之车5号车，据说这辆车子就是用来刷人的，通过率极低。我怀着忐忑的心情，心中一万只草泥马在奔腾，坐上车先倒库，倒车镜是碎的，座椅的高度也不对劲，第一把入库压线，还剩最后一次机会，还是先倒库，根据前一次的经验，提前打方向盘，顺利入库出库。然后上桥，侧方，直角，s弯一路顺风，“考试结束，成绩合格！”，听到的一瞬间，我如释重负，直呼生活比电视剧精彩多了。科三是路考，找私人包车练了两次，考试当天在公交车上碰到了车管所主管包车的阿姨，跟她攀谈，结果被她的话吓到了，什么私人的系统和考试的系统不同，什么包车多的人排的考前，通过率高，我就像被传销人员洗脑了一样很后悔没有去车管所包车。考试分组完成，我被分在了下午，这更使我担心。于是我去找她开条子包了一个小时的车练习，价格是私人教练的两倍。当天因为下雨，一号线被淹，三号线做考场，我去跑了不常当作考场的二号线，三圈下来成绩不是很理想，不过考试系统也差多少。下午考试还是三号线，可我只在这个线上跑过一次，考试的时候三个人一辆车，幸运的是我被排在了最后，前两个人都过了，我最终也幸运的过了。科四和科基本一一样，轻松过了当天拿证。算下来前前后后花了三千块大洋，除了1800报名费之外，其他前都用在了包车练习上，科二练车十几个人一辆车，一个上午也就摸两把，包车联系每小时80,不包够三次还不给约考，科三就没有练车一说了，都是包车练，驾校包车三次给约考，车管所包车你才能熟悉考场，感觉被一层一层地扒皮，年轻人还行，年纪稍大点就没法算了，小城市就这样不省心，但对我来说确实比在大城市学车划算。&lt;/p&gt;
+
+&lt;p&gt;出境是在浦东机场，像我这个从来没有坐过飞机的人，第一次坐飞机还要坐十三个小时，转一次航班，我都为当时的自己捏一把汗。后来证明这都不算啥，碰上航空管制，我的航班在上海机场晚点出发，到达赫尔辛基没有赶上第二个航班，凭着我的蹩脚的英文换机票问路，当晚顺利入住航空公司安排的酒店。第二天起个大早赶飞机，从赫尔辛基飞斯德哥尔摩，然后从斯德哥尔摩再飞奥斯陆，真他妈折腾，邻座一个瑞士的哥们挺活泼的，问这问那，那时候我被第一次问了一个我以后会无数次被问到的问题：为啥去挪威呢？风景好呗，有免费的学上，挪威人英文好，有堂兄在，我真诚实。&lt;/p&gt;
+
+&lt;p&gt;来到奥斯陆，当然少不了麻烦我堂哥David,这个名字基本上可以从他的中文名字直译过来。最让我感动的是刚到奥斯陆住他家，他竟然腾出自己的房间让我住，真是贵宾级的待遇，后来他去宜家买了个折叠床，我才开始每次去他家的时候睡在客厅。刚去的时候我们一起出去跑步，David给我介绍了市中心那些最有名的建筑，真是大开眼界。给我买了个七天的交通卡，可惜我比较宅，只去了维京博物馆，裸体雕塑公园。。。
+                                                                                                                 2016年1月30号以后有心情慢慢更&lt;/p&gt;
+</description>
+        <pubDate>Sat, 30 Jan 2016 00:00:00 +0100</pubDate>
+        <link>http://charlieshao5189.github.io/%E7%94%9F%E6%B4%BB/2016/01/30/miss.html</link>
+        <guid isPermaLink="true">http://charlieshao5189.github.io/%E7%94%9F%E6%B4%BB/2016/01/30/miss.html</guid>
+        
+        <category>Essay</category>
+        
+        
+        <category>生活</category>
+        
+      </item>
+    
+      <item>
+        <title>VHDL Snegitivity List, Combinatorial and Synchronous</title>
+        <description>&lt;h1 id=&quot;vhdl-snegitivity-list-combinatorial-and-synchronous&quot;&gt;VHDL Snegitivity List, Combinatorial and Synchronous&lt;/h1&gt;
+
+&lt;p&gt;If a signal is in the sensitivity list of a process, the process will “wake up” and be evaluated whenever the value of that signal changes. If it is not in the sensitivity list, a signal can change, but a process will not be re-evaluated to determine what the new outputs should be.&lt;/p&gt;
+
+&lt;h3 id=&quot;for-combinatorial-logic&quot;&gt;For Combinatorial Logic:&lt;/h3&gt;
+&lt;p&gt;Likely you want all your input signals to be included in the sensitivity list. If they are not included in the sensitivity list, then that will result in your output not changing even when that input signal changes. This is a common error (due to carelessness). Note that in VHDL 2008 you can use “all” keyword to automatically include all necessary signals in your process and avoid creating latches.&lt;/p&gt;
+
+&lt;h3 id=&quot;for-synchronous-logic&quot;&gt;For Synchronous Logic:&lt;/h3&gt;
+&lt;p&gt;Likely you only want your clock (and maybe your reset) signal in the sensitivity list. This is because you are only concerned with the value of your signals (other than the clock) when your system clock has changed. This is because you are typically describing registers (composed of flip flops) which only allow changing their output value on a clock edge.&lt;/p&gt;
+
+&lt;p&gt;All of this can be confusing in the case of using HDL for synthesis because only a subset of the circuits you describe in VHDL can actually be implemented within a FPGA. For example, you can’t have a primitive memory element that is sensitive to two independent clock edges, even though you could describe such a circuit by including two clocks in a sensitivity list.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 28 Jan 2016 00:00:00 +0100</pubDate>
+        <link>http://charlieshao5189.github.io/%E6%8A%80%E6%9C%AF/2016/01/28/VHDL-Snegitivity-List-Combinatorial-and-Synchronous.html</link>
+        <guid isPermaLink="true">http://charlieshao5189.github.io/%E6%8A%80%E6%9C%AF/2016/01/28/VHDL-Snegitivity-List-Combinatorial-and-Synchronous.html</guid>
+        
+        <category>VHDL</category>
+        
+        
+        <category>技术</category>
+        
+      </item>
+    
+      <item>
+        <title>VHDL codes problem:gated clock and flip-flop&amp; latche</title>
+        <description>&lt;h1 id=&quot;avoid-gated-clock&quot;&gt;1 avoid gated clock&lt;/h1&gt;
+&lt;p&gt;If we had divided the clock and applied the result directly to the register, we would have received a gated clock warning, because the clock applied to the register was not the system clock but the a signal obtained from some logic used to divided it. 
+It’s better to avoid gated clock in VHDL codes.Don’t use divided clock signal, use system clock and enable signal to update register.like:&lt;code class=&quot;highlighter-rouge&quot;&gt;if clk&#39;event and clk = &#39;1&#39; and en =&#39;1&#39; then&lt;/code&gt;. “en” comes from the divided clock signal.&lt;/p&gt;
+
+&lt;h3 id=&quot;disadvantages-of-gated-clock&quot;&gt;disadvantages of gated clock&lt;/h3&gt;
+&lt;p&gt;Using gated clocks can cause undesirable effects such as false/double clocking, missed clocking, non-uniform clocking, and/or undesired clock skew in the design, resulting in unpredictable and unreliable behaviour. Indeed, depending on the clock level, when the load signal is activated the output of the register may be updated, independently of the system clock, causing an asynchronous signal to be propagated through the system.&lt;/p&gt;
+
+&lt;h1 id=&quot;use-flip-flops-instead-of-latches&quot;&gt;2 use flip-flops instead of latches&lt;/h1&gt;
+&lt;p&gt;Always update your registers when a rising edge of the system clock occurs, using the construction&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;VHDL
+prprocess(clk, reset, ....)
+  begin
+      if (reset=‘1’) then
+          your_registers &amp;lt;= ‘0’;
+      elsif(clk’event and clk=‘1’) then
+          your_registers &amp;lt;= new_values;
+      end if;
+end process;
+&lt;/code&gt;&lt;/p&gt;
+
+</description>
+        <pubDate>Wed, 27 Jan 2016 00:00:00 +0100</pubDate>
+        <link>http://charlieshao5189.github.io/%E6%8A%80%E6%9C%AF/2016/01/27/problems-vhdl-codes.html</link>
+        <guid isPermaLink="true">http://charlieshao5189.github.io/%E6%8A%80%E6%9C%AF/2016/01/27/problems-vhdl-codes.html</guid>
+        
+        <category>VHDL</category>
+        
+        
+        <category>技术</category>
+        
+      </item>
+    
+      <item>
+        <title>Cloud Computing</title>
+        <description>&lt;h1 id=&quot;whats-cloud-computing&quot;&gt;1 What’s cloud computing?&lt;/h1&gt;
+
+&lt;h2 id=&quot;for-normal-users&quot;&gt;For normal users:&lt;/h2&gt;
+&lt;iframe width=&quot;560&quot; height=&quot;315&quot; src=&quot;https://www.youtube.com/embed/TTNgV0O_oTg&quot; frameborder=&quot;0&quot; allowfullscreen=&quot;&quot;&gt;&lt;/iframe&gt;
+&lt;p&gt;Tradition: store our data on  desktop computers, laptops, tablets and smartphones.
+Now:store our data on line using Dropbox, GoogleDrive, Microsoft OneDrive.&lt;/p&gt;
+
+&lt;h2 id=&quot;for-business&quot;&gt;For business:&lt;/h2&gt;
+&lt;iframe width=&quot;560&quot; height=&quot;315&quot; src=&quot;https://www.youtube.com/embed/dSN0HeI3Tto&quot; frameborder=&quot;0&quot; allowfullscreen=&quot;&quot;&gt;&lt;/iframe&gt;
+&lt;p&gt;Tradition:buy your own host server, employee people to set and mantian them.
+Now:build you service on line using AWS, GoogleCloudPlatform, Windows Azure.&lt;/p&gt;
+
+&lt;h1 id=&quot;cloud-clients&quot;&gt;2 cloud clients&lt;/h1&gt;
+&lt;p&gt;&lt;img src=&quot;http://www.htguk.com/wp-content/uploads/2014/08/Cloud-Computing-Benefits.png&quot; alt=&quot;cloud clients&quot; /&gt;
+Devices rely on cloud computing for all or a majority of their applications so as to be essentially useless without it.such as desktop computers, laptops, tablets and smartphones and any Ethernet enabled device such as Home Automation Gadgets.
+the browser-based Chromebook:&lt;/p&gt;
+&lt;iframe width=&quot;560&quot; height=&quot;315&quot; src=&quot;https://www.youtube.com/embed/TVqe8ieqz10&quot; frameborder=&quot;0&quot; allowfullscreen=&quot;&quot;&gt;&lt;/iframe&gt;
+
+&lt;h1 id=&quot;service-models&quot;&gt;3 Service models&lt;/h1&gt;
+&lt;ul&gt;
+  &lt;li&gt;Infrastructure as a service (IaaS):To deploy their applications, cloud users install operating-system images and their application software on the cloud infrastructure. In this model, the cloud user patches and maintains the operating systems and the application software.&lt;/li&gt;
+  &lt;li&gt;Platform as a service (PaaS):the consumer does not manage or control the underlying cloud infrastructure including network, servers, operating systems, or storage, but has control over the deployed applications and possibly configuration settings for the application-hosting environment.&lt;/li&gt;
+  &lt;li&gt;Software as a service (SaaS):users gain access to application software and databases.
+&lt;img src=&quot;https://upload.wikimedia.org/wikipedia/commons/3/3c/Cloud_computing_layers.png&quot; alt=&quot;cloud computing layers&quot; /&gt;
+&lt;img src=&quot;http://www.laintronet.co.za/wp-content/uploads/2014/02/cloud-computing.png&quot; alt=&quot;google producet line&quot; /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;cloud-computing-types&quot;&gt;4 Cloud Computing Types&lt;/h1&gt;
+&lt;p&gt;&lt;img src=&quot;https://upload.wikimedia.org/wikipedia/commons/8/87/Cloud_computing_types.svg&quot; alt=&quot;cloud computing types&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;public-clouds&quot;&gt;Public Clouds&lt;/h3&gt;
+&lt;p&gt;A public cloud is one in which the services and infrastructure are provided off-site over the Internet. These clouds offer the greatest level of efficiency in shared resources; however, they are also more vulnerable than private clouds. A public cloud is the obvious choice when&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Your standardized workload for applications is used by lots of people, such as e-mail.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;You need to test and develop application code.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;You have SaaS (Software as a Service) applications from a vendor who has a well-implemented security strategy.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;You need incremental capacity (the ability to add computer capacity for peak times).&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;You’re doing collaboration projects.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;You’re doing an ad-hoc software development project using a Platform as a Service (PaaS) offering cloud.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;private-clouds&quot;&gt;Private Clouds&lt;/h3&gt;
+&lt;p&gt;A private cloud is one in which the services and infrastructure are maintained on a private network. These clouds offer the greatest level of security and control, but they require the company to still purchase and maintain all the software and infrastructure, which reduces the cost savings. A private cloud is the obvious choice when&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Your business is your data and your applications. Therefore, control and security are paramount.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Your business is part of an industry that must conform to strict security and data privacy issues.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Your company is large enough to run a next generation cloud data center efficiently and effectively on its own.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;To complicate things, the lines between private and public clouds are blurring. For example, some public cloud companies are now offering private versions of their public clouds. Some companies that only offered private cloud technologies are now offering public versions of those same capabilities.&lt;/p&gt;
+
+&lt;h3 id=&quot;hybrid-clouds&quot;&gt;Hybrid Clouds&lt;/h3&gt;
+&lt;p&gt;A hybrid cloud includes a variety of public and private options with multiple providers. By spreading things out over a hybrid cloud, you keep each aspect at your business in the most efficient environment possible. The downside is that you have to keep track of multiple different security platforms and ensure that all aspects of your business can communicate with each other. Here are a couple of situations where a hybrid environment is best.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Your company wants to use a SaaS application but is concerned about security. Your SaaS vendor can create a private cloud just for your company inside their firewall. They provide you with a virtual private network (VPN) for additional security.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Your company offers services that are tailored for different vertical markets. You can use a public cloud to interact with the clients but keep their data secured within a private cloud.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Public Cloud vs Private Cloud vs Hybrid Cloud:&lt;/p&gt;
+&lt;iframe width=&quot;560&quot; height=&quot;315&quot; src=&quot;https://www.youtube.com/embed/3WIJ4axzFlU&quot; frameborder=&quot;0&quot; allowfullscreen=&quot;&quot;&gt;&lt;/iframe&gt;
+
+&lt;h1 id=&quot;the-future-of-cloud-computing&quot;&gt;5 The Future of Cloud Computing&lt;/h1&gt;
+&lt;ul&gt;
+  &lt;li&gt;big data, Internet of Things, and mobility&lt;/li&gt;
+  &lt;li&gt;hybrid clouds
+&lt;a href=&quot;http://www.oracle.com/us/corporate/profit/big-ideas/012115-nmanoharan-2408613.html&quot;&gt;Trends in Cloud Computing&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;relationship-of-iot-big-data-and-cloud-computing&quot;&gt;6 Relationship of IOT, Big Data and Cloud Computing&lt;/h1&gt;
+
+&lt;p&gt;The Internet of Things, giving all these devices and people sensors, creates a lot of data on usage. This is called Big Data. Big Data, in turn, is stored in the cloud.&lt;/p&gt;
+
+</description>
+        <pubDate>Fri, 22 Jan 2016 00:00:00 +0100</pubDate>
+        <link>http://charlieshao5189.github.io/%E6%8A%80%E6%9C%AF/2016/01/22/Cloud-Computing.html</link>
+        <guid isPermaLink="true">http://charlieshao5189.github.io/%E6%8A%80%E6%9C%AF/2016/01/22/Cloud-Computing.html</guid>
+        
+        <category>cloud</category>
+        
+        <category>computing</category>
+        
+        
+        <category>技术</category>
+        
+      </item>
+    
+      <item>
+        <title>教科书级别的VHDL代码之灯控有限状态机</title>
+        <description>&lt;h2 id=&quot;section&quot;&gt;灯控有限状态机描述:&lt;/h2&gt;
+
+&lt;p&gt;Design a finite state machine that controls a lighting circuit.&lt;/p&gt;
+
+&lt;p&gt;The FSM has two control inputs - DAY and MANUAL, and two outputs - LIGHT and RED&lt;/p&gt;
+
+&lt;p&gt;The DAY input is from a sensor that indicates whether it is daytime (DAY =’ 1’) or nighttime (DAY=’0’).&lt;/p&gt;
+
+&lt;p&gt;The MANUAL signal comes from a switch that sets if LIGHT is controlled by the sensor (MANUAL=’0’) or if it is lit independently of the sensor (MANUAL=’1’) - Manual mode.&lt;/p&gt;
+
+&lt;p&gt;The LIGHT output turns on the light during the night or when MANUAL=’1’. Otherwise, the light is off - LIGHT = ‘0’.&lt;/p&gt;
+
+&lt;p&gt;The RED output lights a red signaling lamp when MANUAL is active (RED= ‘1’).Otherwise, RED=’0’.&lt;/p&gt;
+
+&lt;p&gt;Design and simulate your FSM so that the light turns on every nights (DAY=’0’) or when MANUAL=’1’. Use a Moore machine.&lt;/p&gt;
+
+&lt;p&gt;This is one possible solution for our problem!
+In this case, the problem is solved using three states – IDLE, M_ON and S_ON.
+Note: !MANUAL means NOT MANUAL or MANUAL =’0’; !DAY means NOT DAY or DAY=’0’&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/charlieshao5189/charlieshao5189.github.io/master/assets/pics/lightFSM.png&quot; alt=&quot;lightFSM&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In the IDLE state, LIGHT is off and the red SIGNAL is also off.&lt;/p&gt;
+
+&lt;p&gt;If MANUAL is switched on, then we go to state M_ON. In this state, LIGHT is on and theRED is also on, signalling that we are in MANUAL mode.&lt;/p&gt;
+
+&lt;p&gt;If MANUAL is switched off, then if during the day (DAY=’1’) we return to the IDLE state, or go to the S_ON if during the night. In the latter case, light stills on but the RED goes off, signalling that we left the Manual mode.&lt;/p&gt;
+
+&lt;p&gt;If MANUAL is switched off, we leave the IDLE state by nightfall and go to the S_ON state. The light is lit. If the manual switch is activated in the meanwhile, we go to the M_ON state and the RED goes on. Otherwise, at daybreak we return to the IDLE state.&lt;/p&gt;
+
+&lt;h3 id=&quot;vhdl&quot;&gt;VHDL代码：&lt;/h3&gt;
+
+&lt;p&gt;```VHDL&lt;/p&gt;
+
+&lt;p&gt;library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;&lt;/p&gt;
+
+&lt;p&gt;entity control is
+    Port ( clk : in STD_LOGIC;		– clk signal input
+			  reset : in STD_LOGIC;		– FSM reset
+			  DAY : in  STD_LOGIC;		– sensor’s input
+           MANUAL : in  STD_LOGIC;  – manual control input
+           LIGHT : out  STD_LOGIC;	– light
+           RED : out  STD_LOGIC);	– warning signal
+end control;&lt;/p&gt;
+
+&lt;p&gt;architecture Behavioral of control is&lt;/p&gt;
+
+&lt;p&gt;– FSM state names				
+type state_type is (IDLE, S_ON, M_ON);      – state names - IDLE - light is disable, manual control is disable
+														  – S_ON - sensor activates the light - manual control is off
+														  – M_ON - manual control is on&lt;/p&gt;
+
+&lt;p&gt;– signals
+signal state_reg, state_next : state_type;  – current and next state&lt;/p&gt;
+
+&lt;p&gt;begin&lt;/p&gt;
+
+&lt;p&gt;– state register&lt;/p&gt;
+
+&lt;p&gt;process (clk, reset)&lt;/p&gt;
+
+&lt;p&gt;begin&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;if (reset=&#39;1&#39;) then
+	state_reg &amp;lt;= IDLE;
+elsif (clk&#39;event and clk=&#39;1&#39;) then		-- update state at the 
+		state_reg &amp;lt;= state_next;			-- rising edge of the clock
+end if;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;end process;&lt;/p&gt;
+
+&lt;p&gt;– next-state/output logic&lt;/p&gt;
+
+&lt;p&gt;process (state_reg, DAY, MANUAL)		– determine the next state
+												– when the current state
+												– or the inputs change
+begin&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;case state_reg is						-- FSM description
+
+	when IDLE =&amp;gt;						-- in the IDLE state -&amp;gt; daytime and manual mode is off
+	
+		LIGHT &amp;lt;= &#39;0&#39;;					-- light is off
+		RED &amp;lt;= &#39;0&#39;;						-- warning signal is off
+	
+		If (MANUAL = &#39;0&#39; and DAY = &#39;1&#39;) then   -- daytime and manual is disable
+						
+			state_next &amp;lt;= IDLE;						-- remains in the IDLE state -&amp;gt; light and warning signal off
+			
+		elsif MANUAL = &#39;1&#39; then						-- MANUAL switch is enabled
+		
+			state_next &amp;lt;= M_ON;						-- changes to manual mode
+			
+		else
+		
+			state_next &amp;lt;= S_ON;						-- night falls =&amp;gt; changes to nighttime -&amp;gt; light is on
+			
+		end if;
+			
+	when S_ON =&amp;gt;						-- in the S_ON state -&amp;gt; night time and manual mode off		
+	
+		LIGHT &amp;lt;= &#39;1&#39;;					-- light is switched on automatically
+		RED &amp;lt;= &#39;0&#39;;						-- warning signal is off
+	
+		If (MANUAL = &#39;0&#39; and DAY = &#39;1&#39;) then   -- sun rises and manual is disable
+						
+			state_next &amp;lt;= IDLE;						-- goes to the IDLE state
+			
+		elsif MANUAL = &#39;1&#39; then						-- manual switch is enabled
+		
+			state_next &amp;lt;= M_ON;						-- goes to the M_ON state
+			
+		else
+		
+			state_next &amp;lt;= S_ON;						-- nighttime
+			
+		end if;
+		
+	when M_ON =&amp;gt;							-- in the M_ON state daytime and manual mode on
+	
+		LIGHT &amp;lt;= &#39;1&#39;;						-- light is on manual mode
+		RED &amp;lt;= &#39;1&#39;;							-- red signal is on
+	
+		If (MANUAL = &#39;0&#39; and DAY = &#39;1&#39;) then    -- daytime and manual is disabled
+						
+			state_next &amp;lt;= IDLE;						 -- goes to the IDLE state
+			
+		elsif MANUAL = &#39;1&#39; then					    -- MANUAL switch is enabled
+		
+			state_next &amp;lt;= M_ON;						 -- remains on the M_ON state
+			
+		else
+		
+			state_next &amp;lt;= S_ON;							-- night falls and manual is disabled -&amp;gt; goes to S_ON state
+			
+		end if;
+	
+
+end case;					-- end of the FSM description
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;end process;&lt;/p&gt;
+
+&lt;p&gt;end Behavioral;&lt;/p&gt;
+
+&lt;p&gt;```&lt;/p&gt;
+
+&lt;h3 id=&quot;simulation&quot;&gt;Simulation代码：&lt;/h3&gt;
+
+&lt;p&gt;```VHDL&lt;/p&gt;
+
+&lt;p&gt;LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;&lt;/p&gt;
+
+&lt;p&gt;ENTITY control_tb IS
+END control_tb;&lt;/p&gt;
+
+&lt;p&gt;ARCHITECTURE behavior OF control_tb IS&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;-- Component Declaration for the Unit Under Test (UUT)
+ 
+COMPONENT control
+PORT(
+     clk : IN  std_logic;
+		reset : IN std_logic;
+     DAY : IN  std_logic;
+     MANUAL : IN  std_logic;
+     LIGHT : OUT  std_logic;
+     RED : OUT  std_logic
+    );
+END COMPONENT;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;–Inputs
+   signal clk : std_logic := ‘0’;    &lt;br /&gt;
+	signal reset : std_logic := ‘1’;		– initialized in the IDLE state
+   signal DAY : std_logic := ‘1’;		– daytime automatic
+   signal MANUAL : std_logic := ‘0’;&lt;/p&gt;
+
+ 	–Outputs
+&lt;p&gt;signal LIGHT : std_logic;				
+   signal RED : std_logic;&lt;/p&gt;
+
+&lt;p&gt;– Clock period definitions
+   constant clk_period : time := 10 ns;&lt;/p&gt;
+
+&lt;p&gt;BEGIN&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;-- Instantiate the Unit Under Test (UUT)    uut: control PORT MAP (
+      clk =&amp;gt; clk,
+		 reset =&amp;gt; reset,
+      DAY =&amp;gt; DAY,
+      MANUAL =&amp;gt; MANUAL,
+      LIGHT =&amp;gt; LIGHT,
+      RED =&amp;gt; RED
+    );
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;– Clock generation
+   clk_process :process
+   begin
+		clk &amp;lt;= ‘0’;
+		wait for clk_period/2;
+		clk &amp;lt;= ‘1’;
+		wait for clk_period/2;
+   end process;&lt;/p&gt;
+
+&lt;p&gt;– Stimulus process
+   stim_proc: process
+   begin		
+      – hold reset state for 100 ns.
+      wait for 100 ns;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  wait for clk_period*10;
+
+  -- insert stimulus here 
+	
+	reset &amp;lt;= &#39;0&#39;;			-- disable reset
+	
+	MANUAL &amp;lt;= &#39;1&#39;;			-- activate manual mode while in daytime
+	DAY &amp;lt;= &#39;1&#39;;				
+	wait for 105 ns;
+	
+	MANUAL &amp;lt;= &#39;1&#39;;			-- night falls
+	DAY &amp;lt;= &#39;0&#39;;				
+	wait for 105 ns;
+	
+	MANUAL &amp;lt;= &#39;0&#39;;			-- disable manual mode while in night time
+	DAY &amp;lt;= &#39;0&#39;;				
+	wait for 105 ns;
+	
+	MANUAL &amp;lt;= &#39;0&#39;;			-- sun rises
+	DAY &amp;lt;= &#39;1&#39;;				
+	wait for 105 ns;
+	
+	MANUAL &amp;lt;= &#39;0&#39;;			-- night falls
+	DAY &amp;lt;= &#39;0&#39;;				
+	wait for 105 ns;
+	
+	MANUAL &amp;lt;= &#39;1&#39;;			-- activate manual mode while in night time
+	DAY &amp;lt;= &#39;0&#39;;				
+	wait for 105 ns;
+	
+	MANUAL &amp;lt;= &#39;0&#39;;			-- disable manual mode when sun rises
+	DAY &amp;lt;= &#39;1&#39;;				
+	wait for 105 ns;
+	
+	wait;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;end process;&lt;/p&gt;
+
+&lt;p&gt;END;&lt;/p&gt;
+
+&lt;p&gt;```&lt;/p&gt;
+
+&lt;h3 id=&quot;tip1&quot;&gt;Tip1:&lt;/h3&gt;
+&lt;p&gt;All sequential statements are within the PROCESS block. Or in other word, all statements within PROCESS are sequential.
+IF THEN, CASE and FOR LOOP三种声明方式只能用在顺序结构中，即process中，参考&lt;a href=&quot;http://web.engr.oregonstate.edu/~sllu/vhdl/lec2f.html&quot;&gt;More VHDL Constructs&lt;/a&gt;。&lt;/p&gt;
+
+&lt;h3 id=&quot;tip2&quot;&gt;Tip2:&lt;/h3&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;
+  process (state_reg, DAY, MANUAL)		-- determine the next state
+&lt;/code&gt;
+Process executes when there is an event on one of the signals on its sensitivity list causing events to occurs on signals that it assigns to.&lt;/p&gt;
+
+</description>
+        <pubDate>Wed, 20 Jan 2016 00:00:00 +0100</pubDate>
+        <link>http://charlieshao5189.github.io/%E6%8A%80%E6%9C%AF/2016/01/20/VHDL-codes-sample-countroler.html</link>
+        <guid isPermaLink="true">http://charlieshao5189.github.io/%E6%8A%80%E6%9C%AF/2016/01/20/VHDL-codes-sample-countroler.html</guid>
+        
+        <category>VHDL</category>
+        
+        
+        <category>技术</category>
+        
+      </item>
+    
+      <item>
+        <title>教科书级别的VHDL代码之自加减计数器</title>
+        <description>&lt;h2 id=&quot;section&quot;&gt;自加减计数器:&lt;/h2&gt;
+
+&lt;h3 id=&quot;vhdl&quot;&gt;VHDL代码：&lt;/h3&gt;
+
+&lt;p&gt;```VHDL&lt;/p&gt;
+
+&lt;p&gt;library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;&lt;/p&gt;
+
+&lt;p&gt;entity counter is
+    Port ( clk : in  STD_LOGIC;									   – clk signal input
+           direction : in  STD_LOGIC;								– one input to control the counter direction
+           count_out : out  STD_LOGIC_VECTOR (7 downto 0)); – counter outputs to drive the LEDs
+end counter;&lt;/p&gt;
+
+&lt;p&gt;architecture Behavioral of counter is&lt;/p&gt;
+
+&lt;p&gt;signal count_int : std_logic_vector(7 downto 0) := (others =&amp;gt; ‘0’);		– register with the counter value to be 
+																								– displayed by the LEDs - initialized to 0&lt;/p&gt;
+
+&lt;p&gt;signal clkdiv  : std_logic_vector (23 downto 0) := (others =&amp;gt; ‘0’);		– register to generate an enable signal each
+																								– 0.167(7) seconds with a 100MHz clock  - initialized to 0
+																								– 2^24 bits * 1/(100*10^6) = 0.167(7) seconds&lt;/p&gt;
+
+&lt;p&gt;–signal clkdiv  : std_logic_vector (3 downto 0) := (others =&amp;gt; ‘0’);   – the same signal with only 4 bits used 
+																								– during simulation to cut simulation time
+																								– initialized to 0&lt;/p&gt;
+
+&lt;p&gt;signal en : std_logic := ‘0’;		   	– the enable signal will allow the counter to increment or decrement
+													– its current value according to the direction signal - initialized to 0
+													– the counter starts by incrementing its value&lt;/p&gt;
+
+&lt;p&gt;begin&lt;/p&gt;
+
+&lt;p&gt;process (clk, en)&lt;/p&gt;
+
+&lt;p&gt;begin&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;if clk&#39;event and clk = &#39;1&#39; then			-- a rising edge of the clock will increment the 24 bits register
+
+		clkdiv &amp;lt;= std_logic_vector (signed (clkdiv) + 1);
+		
+	if clkdiv = x&quot;FFFFFF&quot; then			-- if the content of the register is FFFFFFh, then
+	--if clkdiv = &quot;1111&quot; then				-- the same comparison with only 4 bits to be used during simulation
+		
+			en &amp;lt;= &#39;1&#39;;							-- the enable signal is activated and the counter is incremented or
+													-- decremented according to the direction signal
+		else
+			en &amp;lt;=&#39;0&#39;;							-- if the content of the register is different from FFFFFFh, then
+													-- the enable signal is disable and the counter will not be incremented
+		end if;
+end if;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;if clk’event and clk = ‘1’ and en =’1’ then  – if a rising edge of the clock is detected and the enable signal
+																– is active, then the clock signal is applied to the counter&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;	if direction=&#39;1&#39; then   												-- depending on the direction signal
+     count_int &amp;lt;= std_logic_vector (signed (count_int) + 1);	-- the counter is incremented
+  else
+     count_int &amp;lt;= std_logic_vector (signed (count_int) - 1);	-- or decremented
+  end if;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;end if;&lt;/p&gt;
+
+&lt;p&gt;end process;&lt;/p&gt;
+
+&lt;p&gt;count_out &amp;lt;= count_int;									– the content of the counter is assigned to the outputs&lt;/p&gt;
+
+&lt;p&gt;end Behavioral;&lt;/p&gt;
+
+&lt;p&gt;```&lt;/p&gt;
+
+&lt;h3 id=&quot;simulation&quot;&gt;Simulation代码：&lt;/h3&gt;
+
+&lt;p&gt;```VHDL
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;&lt;/p&gt;
+
+&lt;p&gt;ENTITY counter_tb IS
+END counter_tb;&lt;/p&gt;
+
+&lt;p&gt;ARCHITECTURE behavior OF counter_tb IS&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;-- Component Declaration for the Unit Under Test (UUT)
+ 
+COMPONENT counter
+PORT(
+     clk : in  STD_LOGIC;
+     direction : in  STD_LOGIC;
+     count_out : out  std_logic_vector(7 downto 0)
+    );
+END COMPONENT;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;–Inputs
+   signal clk : std_logic := ‘0’;
+   signal direction : std_logic := ‘1’;			– initialized to 1 - the counter starts by incrementing the value&lt;/p&gt;
+
+ 	–Outputs
+&lt;p&gt;signal count_out : std_logic_vector(7 downto 0);&lt;/p&gt;
+
+&lt;p&gt;– Constants
+	constant clk_period : time := 10 ns;					– period for a 100MHz clock&lt;/p&gt;
+
+&lt;p&gt;BEGIN&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;-- Instantiate the Unit Under Test (UUT)    uut: counter PORT MAP (
+      clk =&amp;gt; clk,
+      direction =&amp;gt; direction,
+      count_out =&amp;gt; count_out
+    );
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;– Clock process definitions - generates the clock pulses
+   clk_process :process
+   begin
+		clk &amp;lt;= ‘0’;
+		wait for clk_period/2;
+		clk &amp;lt;= ‘1’;
+		wait for clk_period/2;
+   end process;&lt;/p&gt;
+
+&lt;p&gt;– Stimulus process
+   stim_proc: process
+   begin&lt;/p&gt;
+
+&lt;p&gt;direction &amp;lt;= ‘0’ after 2000 ns;	– changes the counting direction from increment to 
+												– decrement after 2000ns of simulation time
+      wait;
+   end process;&lt;/p&gt;
+
+&lt;p&gt;END;&lt;/p&gt;
+
+&lt;p&gt;```&lt;/p&gt;
+
+&lt;h3 id=&quot;tip1&quot;&gt;Tip1:&lt;/h3&gt;
+
+&lt;p&gt;```
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;&lt;/p&gt;
+
+&lt;p&gt;clkdiv &amp;lt;= std_logic_vector (signed (clkdiv) + 1);
+&lt;code class=&quot;highlighter-rouge&quot;&gt;
+这里使用了&lt;/code&gt;IEEE.NUMERIC_STD.ALL```来实现clkdiv的递增，而不是采用&lt;/p&gt;
+
+&lt;p&gt;```
+use IEEE.STD_LOGIC_1164.ALL;
+use STD_LOGIC_UNSIGNEDA.ALL;&lt;/p&gt;
+
+&lt;p&gt;clkdiv &amp;lt;= clkdiv+1;
+&lt;code class=&quot;highlighter-rouge&quot;&gt;
+是因为&lt;/code&gt;STD_LOGIC_UNSIGNEDA.ALL&lt;code class=&quot;highlighter-rouge&quot;&gt;不再是最新的标准，它是90年代初Synopsys写下的，曾被广泛应用。&lt;/code&gt;IEEE.NUMERIC_STD.ALL```是新的不断在更新的IEEE标准，建议采用。更具体的解释请访问&lt;a href=&quot;http://www.edaboard.com/thread266288.html&quot;&gt; numeric_std vs std_logic_unsigned.all&lt;/a&gt;。&lt;/p&gt;
+
+&lt;h3 id=&quot;tip2&quot;&gt;Tip2:&lt;/h3&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;
+   if clk&#39;event and clk = &#39;1&#39; and en =&#39;1&#39; then  -- if a rising edge of the clock is detected and the enable signal
+																-- is active, then the clock signal is applied to the counter
+&lt;/code&gt;
+这里的写法叫做Gated clock,优点是en不经常改变的时候比较节能，缺点是增加了延迟，占用空间使设计变得复杂，详见&lt;a href=&quot;http://vhdlguru.blogspot.no/2010/04/what-is-gated-clock-and-how-it-reduces.html&quot;&gt;What is a Gated clock and how it reduces power consumption?&lt;/a&gt;。&lt;/p&gt;
+</description>
+        <pubDate>Wed, 20 Jan 2016 00:00:00 +0100</pubDate>
+        <link>http://charlieshao5189.github.io/%E6%8A%80%E6%9C%AF/2016/01/20/VHDL-codes-sample-counter.html</link>
+        <guid isPermaLink="true">http://charlieshao5189.github.io/%E6%8A%80%E6%9C%AF/2016/01/20/VHDL-codes-sample-counter.html</guid>
+        
+        <category>VHDL</category>
+        
+        
+        <category>技术</category>
+        
+      </item>
+    
+      <item>
+        <title>VHDL Timing Contrains</title>
+        <description>&lt;h3 id=&quot;path-endpoints-are&quot;&gt;Path Endpoints are:&lt;/h3&gt;
+&lt;p&gt;-I/O pads
+-Synchronous elements:FFs, letches, Rams, DSP slices, SRLs, etc.&lt;/p&gt;
+
+&lt;h3 id=&quot;pathe-endpoints-do-not-include&quot;&gt;Pathe Endpoints do Not include:&lt;/h3&gt;
+&lt;p&gt;-LUTs
+-Nets, or any other asynchronous element&lt;/p&gt;
+
+&lt;h3 id=&quot;constraint-type&quot;&gt;Constraint Type:&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;The PERIOD contraint covers delay paths between synchronous elementes&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The OFFSET IN constraint covers delay paths from input pins to syschronous elements&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The OFFSET OUT constraint covers delay paths form synchronous elements to output pins&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;setting of constraints depends on the system requirment.&lt;/p&gt;
+</description>
+        <pubDate>Wed, 20 Jan 2016 00:00:00 +0100</pubDate>
+        <link>http://charlieshao5189.github.io/%E6%8A%80%E6%9C%AF/2016/01/20/VHDL-Timing-Contrains.html</link>
+        <guid isPermaLink="true">http://charlieshao5189.github.io/%E6%8A%80%E6%9C%AF/2016/01/20/VHDL-Timing-Contrains.html</guid>
+        
+        <category>VHDL</category>
+        
+        
+        <category>技术</category>
+        
+      </item>
+    
+      <item>
+        <title>MARKDOWN语法用例</title>
+        <description>&lt;h1 id=&quot;markdown&quot;&gt;什么是Markdown&lt;/h1&gt;
+
+&lt;p&gt;Markdown是一个将文本转化为HTML的工具。简单来说，Markdown是一个兼顾可读性与易用性的轻量级标记体系。Markdown并不追求大而全，它只关心HTML里最常用的几个标记，对于一些不常用的标记它允许直接将HTML标记插入文本。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;section&quot;&gt;标题&lt;/h1&gt;
+
+&lt;p&gt;Markdown提供了两种方式（Setext和Atx）来显示标题。&lt;/p&gt;
+
+&lt;h2 id=&quot;section-1&quot;&gt;语法：&lt;/h2&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Setext方式
+标题1
+=================
+
+标题2
+-----------------
+
+Atx方式
+# 标题1
+## 标题2
+###### 标题6
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;section-2&quot;&gt;效果：&lt;/h2&gt;
+
+&lt;p&gt;Setext方式&lt;/p&gt;
+
+&lt;h1 id=&quot;section-3&quot;&gt;标题1&lt;/h1&gt;
+
+&lt;h2 id=&quot;section-4&quot;&gt;标题2&lt;/h2&gt;
+
+&lt;p&gt;Atx方式&lt;/p&gt;
+
+&lt;h1 id=&quot;section-5&quot;&gt;标题1&lt;/h1&gt;
+
+&lt;h2 id=&quot;section-6&quot;&gt;标题2&lt;/h2&gt;
+
+&lt;h6 id=&quot;section-7&quot;&gt;标题6&lt;/h6&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;section-8&quot;&gt;换行&lt;/h1&gt;
+
+&lt;p&gt;在文字的末尾使用两个或两个以上的空格来表示换行。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;section-9&quot;&gt;引用&lt;/h1&gt;
+
+&lt;p&gt;行首使用&amp;gt;加上一个空格表示引用段落，内部可以嵌套多个引用。&lt;/p&gt;
+
+&lt;h2 id=&quot;section-10&quot;&gt;语法：&lt;/h2&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&amp;gt; 这是一个引用，这里木有换行，
+&amp;gt; 在这里换行了。
+&amp;gt; &amp;gt; 内部嵌套
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;section-11&quot;&gt;效果：&lt;/h2&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;这是一个引用，这里木有换行，&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;在这里换行了。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;blockquote&gt;
+    &lt;p&gt;内部嵌套&lt;/p&gt;
+  &lt;/blockquote&gt;
+&lt;/blockquote&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;section-12&quot;&gt;列表&lt;/h1&gt;
+
+&lt;p&gt;无序列表使用*、+或-后面加上空格来表示。&lt;/p&gt;
+
+&lt;h2 id=&quot;section-13&quot;&gt;语法：&lt;/h2&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;* Item 1
+* Item 2
+* Item 3
+
++ Item 1
++ Item 2
++ Item 3
+
+- Item 1
+- Item 2
+- Item 3
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;section-14&quot;&gt;效果：&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Item 1&lt;/li&gt;
+  &lt;li&gt;Item 2&lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Item 3&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Item 1&lt;/li&gt;
+  &lt;li&gt;Item 2&lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Item 3&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Item 1&lt;/li&gt;
+  &lt;li&gt;Item 2&lt;/li&gt;
+  &lt;li&gt;Item 3&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;有序列表使用数字加英文句号加空格表示。&lt;/p&gt;
+
+&lt;h2 id=&quot;section-15&quot;&gt;语法：&lt;/h2&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;1. Item 1
+2. Item 2
+3. Item 3
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;section-16&quot;&gt;效果：&lt;/h2&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Item 1&lt;/li&gt;
+  &lt;li&gt;Item 2&lt;/li&gt;
+  &lt;li&gt;Item 3&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;section-17&quot;&gt;代码区域&lt;/h1&gt;
+
+&lt;p&gt;行内代码使用反斜杠`表示。
+代码段落则是在每行文字前加4个空格或者1个缩进符表示。&lt;/p&gt;
+
+&lt;h2 id=&quot;section-18&quot;&gt;语法：&lt;/h2&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Bash中可以使用echo来进行输出。
+    $ echo &#39;Something&#39;
+    $ echo -e &#39;\tSomething\n&#39; ## 效果：
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Bash中可以使用echo来进行输出。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ echo &#39;Something&#39;
+$ echo -e &#39;\tSomething\n&#39;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;section-19&quot;&gt;强调&lt;/h1&gt;
+
+&lt;p&gt;Markdown使用*或_表示强调。&lt;/p&gt;
+
+&lt;h2 id=&quot;section-20&quot;&gt;语法：&lt;/h2&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;单星号 = *斜体*
+单下划线 = _斜体_
+双星号 = **加粗**
+双下划线 = __加粗__ 效果：
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;单星号 = &lt;em&gt;斜体&lt;/em&gt;
+单下划线 = &lt;em&gt;斜体&lt;/em&gt;
+双星号 = &lt;strong&gt;加粗&lt;/strong&gt;
+双下划线 = &lt;strong&gt;加粗&lt;/strong&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;section-21&quot;&gt;链接&lt;/h1&gt;
+
+&lt;p&gt;Markdown支持两种风格的链接：Inline和Reference。&lt;/p&gt;
+
+&lt;h2 id=&quot;section-22&quot;&gt;语法：&lt;/h2&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Inline：以中括号标记显示的链接文本，后面紧跟用小括号包围的链接。如果链接有title属性，则在链接中使用空格加&quot;title属性&quot;。
+Reference：一般应用于多个不同位置使用相同链接。通常分为两个部分，调用部分为[链接文本][ref]；定义部分可以出现在文本中的其他位置，格式为[ref]: http://some/link/address (可选的标题)。
+注：ref中不区分大小写。
+
+这是一个Inline[示例](http://equation85.github.com &quot;可选的title&quot;)。
+这是一个Reference[示例][ref]。
+[ref]: http://equation85.github.com
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;section-23&quot;&gt;效果：&lt;/h2&gt;
+
+&lt;p&gt;这是一个Inline&lt;a href=&quot;http://charlieshao5189.github.io&quot; title=&quot;可选的title&quot;&gt;示例&lt;/a&gt;。
+这是一个Reference&lt;a href=&quot;http://charlieshao5189.com&quot;&gt;示例&lt;/a&gt;。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;section-24&quot;&gt;图片&lt;/h1&gt;
+
+&lt;p&gt;图片的使用方法基本上和链接类似，只是在中括号前加叹号。
+注：Markdown不能设置图片大小，如果必须设置则应使用HTML标记&lt;img /&gt;。&lt;/p&gt;
+
+&lt;h2 id=&quot;section-25&quot;&gt;语法：&lt;/h2&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Inline示例：![替代文本](https://raw.githubusercontent.com/charlieshao5189/charlieshao5189.github.io/master/assets/pics/avatar.png &quot;可选的title&quot;)
+Reference示例：![替代文本][pic]
+[pic]: https://raw.githubusercontent.com/charlieshao5189/charlieshao5189.github.io/master/assets/pics/avatar.png &quot;可选的title&quot;
+HTML示例：&amp;lt;img src=&quot;https://raw.githubusercontent.com/charlieshao5189/charlieshao5189.github.io/master/assets/pics/avatar.png &quot; alt=&quot;替代文本&quot; title=&quot;标题文本&quot; width=&quot;200&quot; /&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;section-26&quot;&gt;效果：&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/charlieshao5189/charlieshao5189.github.io/master/assets/pics/avatar.png&quot; alt=&quot;替代文本&quot; title=&quot;可选的title&quot; /&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;section-27&quot;&gt;其他&lt;/h1&gt;
+
+&lt;h2 id=&quot;section-28&quot;&gt;自动链接&lt;/h2&gt;
+
+&lt;p&gt;使用尖括号，可以为输入的URL或者邮箱自动创建链接。如&lt;a href=&quot;test@domain.com&quot;&gt;test@domain.com&lt;/a&gt;。&lt;/p&gt;
+
+&lt;h2 id=&quot;section-29&quot;&gt;分隔线&lt;/h2&gt;
+
+&lt;p&gt;在一行中使用三个或三个以上的*、-或_可以添加分隔线，其中可以有空白，但是不能有其他字符。&lt;/p&gt;
+
+&lt;h2 id=&quot;section-30&quot;&gt;转义字符&lt;/h2&gt;
+
+&lt;p&gt;Markdown中的转义字符为\，可以转义的有：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;\ 反斜杠&lt;/li&gt;
+  &lt;li&gt;` 反引号&lt;/li&gt;
+  &lt;li&gt;* 星号&lt;/li&gt;
+  &lt;li&gt;_ 下划线&lt;/li&gt;
+  &lt;li&gt;{} 大括号&lt;/li&gt;
+  &lt;li&gt;[] 中括号&lt;/li&gt;
+  &lt;li&gt;() 小括号&lt;/li&gt;
+  &lt;li&gt;# 井号&lt;/li&gt;
+  &lt;li&gt;+ 加号&lt;/li&gt;
+  &lt;li&gt;- 减号&lt;/li&gt;
+  &lt;li&gt;. 英文句号&lt;/li&gt;
+  &lt;li&gt;! 感叹号&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;section-31&quot;&gt;结语&lt;/h1&gt;
+
+&lt;p&gt;Markdown语法很大程度上减少了编辑的成本，但是在写作这篇文章的时候也发现某些标记对中文的支持似乎并不完美，虽然这些缺陷可以通过直接插入HTML代码解决（但这么做一点都不漂亮）。总的来说，能够在离线状态下使用命令行模式进行写作还是很爽的，相比在线写作模式精力可以更专注。&lt;/p&gt;
+</description>
+        <pubDate>Sat, 16 Jan 2016 00:00:00 +0100</pubDate>
+        <link>http://charlieshao5189.github.io/jekyll/2016/01/16/markdown-instances.html</link>
+        <guid isPermaLink="true">http://charlieshao5189.github.io/jekyll/2016/01/16/markdown-instances.html</guid>
+        
+        
+        <category>Jekyll</category>
+        
+      </item>
+    
+  </channel>
+</rss>

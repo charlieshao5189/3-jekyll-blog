@@ -1,0 +1,37 @@
+# Site settings
+title: CharlieShao's Blog
+email: "charlieshao5189@gmail.com"
+description: "CharlieShao's Blog"
+baseurl: "" # the subpath of your site, e.g. /blog/
+url: "http://charlieshao5189.github.io" # the base hostname & protocol for your site
+
+# Sidebar filter
+# Choose 'tag' or 'category' as filter in sidebar.
+filter: 'category'
+
+
+# Social account
+# twitter:  username
+# weibo:    ID
+# github:   username
+# codepen:  username
+# dribbble: username
+
+#link: http://charlieshao5189.github.io
+weibo: http://weibo.com/cloud_007
+github: http://github.com/charlieshao5189@gmail.com
+
+# Comment
+disqus_shortname: charlieshaoblog 
+
+
+# Google Analytics
+google_analytics: UA-72184644-1
+
+
+# Build settings
+markdown: kramdown
+sass:
+  style: compressed
+gems:
+  - jekyll-sitemap
